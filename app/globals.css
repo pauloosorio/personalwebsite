@@ -1954,8 +1954,10 @@ button {
 }
 
 .story-panel-contact {
-  align-self: center;
-  margin-block-start: clamp(-76px, -4.5vh, -42px);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-block-start: 0;
   width: min(920px, calc(100vw - 40px));
   max-height: min(620px, calc(100svh - 40px));
   border: 0;
@@ -1963,6 +1965,7 @@ button {
   padding: 0;
   background: transparent;
   box-shadow: none;
+  transform: translate(-50%, -50%);
   overflow: visible;
 }
 
@@ -1978,6 +1981,7 @@ button {
 .postcard-back {
   position: relative;
   display: grid;
+  height: min(620px, calc(100svh - 40px));
   min-height: 500px;
   align-items: center;
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1fr);
@@ -3868,12 +3872,16 @@ button {
   }
 
   .story-panel-contact {
+    position: relative;
+    top: auto;
+    left: auto;
     align-self: stretch;
     margin-block-start: 0;
     width: 100%;
     min-height: 100svh;
     max-height: none;
     padding: 20px;
+    transform: none;
     overflow: auto;
   }
 
@@ -3884,6 +3892,7 @@ button {
   }
 
   .postcard-back {
+    height: auto;
     min-height: calc(100svh - 40px);
     grid-template-columns: 1fr;
     gap: 28px;
