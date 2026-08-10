@@ -1954,6 +1954,7 @@ button {
 }
 
 .story-panel-contact {
+  align-self: center;
   width: min(920px, calc(100vw - 40px));
   max-height: min(620px, calc(100svh - 40px));
   border: 0;
@@ -1977,6 +1978,7 @@ button {
   position: relative;
   display: grid;
   min-height: 500px;
+  align-items: center;
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1fr);
   gap: 34px;
   overflow: hidden;
@@ -3865,6 +3867,7 @@ button {
   }
 
   .story-panel-contact {
+    align-self: stretch;
     width: 100%;
     min-height: 100svh;
     max-height: none;
