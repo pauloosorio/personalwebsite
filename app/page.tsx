@@ -450,7 +450,7 @@ export default function Home() {
           </header>
 
           <nav className="world-links" aria-label="Primary links">
-            <a href="https://linkedin.com/in/paulo-osorio-70507a198">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/paulo-os%C3%B3rio-70507a198">LinkedIn</a>
           </nav>
 
           <div className="object-layer" aria-label="Interactive portfolio objects">
