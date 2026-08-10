@@ -988,11 +988,14 @@ export default function Home() {
                   >
                     {isPostcardSubmitting ? "Sending..." : "Send postcard"}
                   </button>
-                  {postcardStatus ? (
-                    <p className="postcard-status" role="status">
-                      {postcardStatus}
-                    </p>
-                  ) : null}
+                  <p
+                    className="postcard-status"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    {postcardStatus || "\u00a0"}
+                  </p>
                 </form>
               </div>
             ) : null}

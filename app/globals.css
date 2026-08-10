@@ -2154,6 +2154,8 @@ button {
   color: var(--ziggy-cocoa);
   font-family: var(--font-ui);
   font-size: 12px;
+  line-height: 1.35;
+  min-height: calc(12px * 1.35 * 2);
 }
 
 .postcard-stamp {
