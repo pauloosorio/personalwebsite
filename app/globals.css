@@ -1955,6 +1955,7 @@ button {
 
 .story-panel-contact {
   align-self: center;
+  margin-block-start: clamp(-76px, -4.5vh, -42px);
   width: min(920px, calc(100vw - 40px));
   max-height: min(620px, calc(100svh - 40px));
   border: 0;
@@ -3868,6 +3869,7 @@ button {
 
   .story-panel-contact {
     align-self: stretch;
+    margin-block-start: 0;
     width: 100%;
     min-height: 100svh;
     max-height: none;
