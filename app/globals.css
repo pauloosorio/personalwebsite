@@ -1983,13 +1983,13 @@ button {
   display: grid;
   height: min(620px, calc(100svh - 40px));
   min-height: 500px;
-  align-items: center;
+  align-items: start;
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1fr);
   gap: 34px;
   overflow: hidden;
   border: 0;
   border-radius: 0;
-  padding: clamp(48px, 5vw, 70px);
+  padding: clamp(42px, 4vw, 56px) clamp(48px, 5vw, 70px);
   background:
     linear-gradient(var(--ziggy-clay), var(--ziggy-clay)) 8px 8px / calc(100% - 16px) 2px no-repeat,
     linear-gradient(var(--ziggy-clay), var(--ziggy-clay)) 8px calc(100% - 10px) / calc(100% - 16px) 2px no-repeat,
@@ -2023,15 +2023,15 @@ button {
 }
 
 .postcard-back::after {
-  right: 52px;
-  bottom: 42px;
-  width: 230px;
-  height: 90px;
+  right: 56px;
+  bottom: 28px;
+  width: 190px;
+  height: 48px;
   background:
-    linear-gradient(rgba(64, 53, 45, 0.28), rgba(64, 53, 45, 0.28)) 0 18px / 100% 1px no-repeat,
-    linear-gradient(rgba(64, 53, 45, 0.24), rgba(64, 53, 45, 0.24)) 0 46px / 100% 1px no-repeat,
-    linear-gradient(rgba(64, 53, 45, 0.2), rgba(64, 53, 45, 0.2)) 0 74px / 100% 1px no-repeat;
-  opacity: 0.72;
+    linear-gradient(rgba(64, 53, 45, 0.22), rgba(64, 53, 45, 0.22)) 0 0 / 100% 1px no-repeat,
+    linear-gradient(rgba(64, 53, 45, 0.18), rgba(64, 53, 45, 0.18)) 0 24px / 100% 1px no-repeat,
+    linear-gradient(rgba(64, 53, 45, 0.14), rgba(64, 53, 45, 0.14)) 0 48px / 100% 1px no-repeat;
+  opacity: 0.58;
 }
 
 .postcard-left,
@@ -2043,6 +2043,7 @@ button {
 
 .postcard-left {
   display: grid;
+  align-self: start;
   align-content: start;
   gap: 18px;
   padding-right: 18px;
@@ -2059,16 +2060,17 @@ button {
 
 .postcard-form {
   display: grid;
+  align-self: start;
   align-content: start;
-  gap: 14px;
-  padding: 8px 0 0;
+  gap: 10px;
+  padding: 0;
 }
 
 .postcard-form h2 {
-  margin: 0 92px 4px 0;
+  margin: 0 92px 2px 0;
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: clamp(24px, 3vw, 36px);
+  font-size: clamp(24px, 2.7vw, 34px);
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1;
@@ -2119,7 +2121,7 @@ button {
 }
 
 .postcard-form textarea {
-  min-height: 114px;
+  min-height: 76px;
   resize: vertical;
 }
 
@@ -2136,6 +2138,7 @@ button {
 
 .postcard-send {
   justify-self: start;
+  margin-top: 2px;
   border: 2px solid rgba(194, 90, 44, 0.72);
   border-radius: 0;
   padding: 8px 11px;
@@ -2156,13 +2159,32 @@ button {
   outline-offset: 3px;
 }
 
-.postcard-status {
+.postcard-toast {
+  position: absolute;
+  right: clamp(48px, 5vw, 70px);
+  bottom: 34px;
+  z-index: 3;
+  max-width: min(320px, calc(100% - 96px));
   margin: 0;
-  color: var(--ziggy-cocoa);
+  border: 1px solid rgba(194, 90, 44, 0.34);
+  padding: 10px 12px;
+  background: rgba(255, 249, 236, 0.92);
+  box-shadow: 0 12px 30px rgba(64, 53, 45, 0.14);
+  color: var(--ink);
   font-family: var(--font-ui);
   font-size: 12px;
-  line-height: 1.35;
-  min-height: calc(12px * 1.35 * 2);
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 8px;
+  transition:
+    opacity 180ms ease,
+    translate 180ms ease;
+}
+
+.postcard-toast.is-visible {
+  opacity: 1;
+  translate: 0 0;
 }
 
 .postcard-stamp {

@@ -988,15 +988,15 @@ export default function Home() {
                   >
                     {isPostcardSubmitting ? "Sending..." : "Send postcard"}
                   </button>
-                  <p
-                    className="postcard-status"
-                    role="status"
-                    aria-live="polite"
-                    aria-atomic="true"
-                  >
-                    {postcardStatus || "\u00a0"}
-                  </p>
                 </form>
+                <p
+                  className={`postcard-toast${postcardStatus ? " is-visible" : ""}`}
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {postcardStatus || "\u00a0"}
+                </p>
               </div>
             ) : null}
           </section>
