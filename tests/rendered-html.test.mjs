@@ -87,7 +87,7 @@ test("keeps the backpack paper CV experience wired", async () => {
   assert.match(styles, /\.cv-chip-list/);
 });
 
-test("keeps the Ziggy album and local message form wired", async () => {
+test("keeps the Ziggy album and private message form wired", async () => {
   const [page, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -101,7 +101,10 @@ test("keeps the Ziggy album and local message form wired", async () => {
   assert.match(page, /ziggy-paper-book-cutout\.png/);
   assert.match(page, /img_0482-polaroid\.png/);
   assert.match(page, /img_0486-polaroid\.png/);
-  assert.match(page, /window\.localStorage\.setItem\("ziggyMessages"/);
+  assert.match(page, /privateMessageEndpoint/);
+  assert.match(page, /Message sent\. We&#x27;ll make sure Ziggy gets it|Message sent\. We'll make sure Ziggy gets it/);
+  assert.doesNotMatch(page, /window\.localStorage/);
+  assert.doesNotMatch(page, /Little notes/);
   assert.match(styles, /\.ziggy-album/);
   assert.match(styles, /\.ziggy-album-surface/);
   assert.match(styles, /\.ziggy-polaroid/);
@@ -246,7 +249,8 @@ test("keeps the Porto postcard contact panel wired", async () => {
   assert.match(page, /Write a postcard/);
   assert.match(page, /STAMP/);
   assert.doesNotMatch(page, /A small postcard from Porto/);
-  assert.match(page, /Postcard drafted/);
+  assert.match(page, /Send postcard/);
+  assert.match(page, /Where can I reply\?/);
   assert.match(styles, /\.postcard-back/);
   assert.doesNotMatch(styles, /\.postcard-mark/);
   assert.match(styles, /var\(--ziggy-clay\)/);

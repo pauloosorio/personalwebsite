@@ -6,14 +6,17 @@ import Link from "next/link";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 const panelKeys = ["backpack", "ziggy", "projects", "contact"] as const;
+const privateMessageEndpoint = "https://formspree.io/f/mjybwbjp";
 
 type PanelId = (typeof panelKeys)[number];
 type PanelKey = PanelId | null;
 type BackpackSection = "about" | "cv";
 
-type ZiggyMessage = {
-  id: string;
-  name: string;
+type PrivateMessagePayload = {
+  source: "postcard" | "ziggy";
+  name?: string;
+  email?: string;
+  subject: string;
   message: string;
 };
 
@@ -227,16 +230,6 @@ const ziggyStoryParagraphs = [
 const isPanelId = (value: string): value is PanelId =>
   panelKeys.includes(value as PanelId);
 
-const isZiggyMessage = (value: unknown): value is ZiggyMessage => {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.message === "string"
-  );
-};
-
 const focusableSelector = [
   "a[href]",
   "button:not([disabled])",
@@ -258,22 +251,9 @@ export default function Home() {
   const [ziggyMessage, setZiggyMessage] = useState("");
   const [ziggyPhotoIndex, setZiggyPhotoIndex] = useState(0);
   const [postcardStatus, setPostcardStatus] = useState("");
-  const [ziggyMessages, setZiggyMessages] = useState<ZiggyMessage[]>(() => {
-    if (typeof window === "undefined") return [];
-
-    const savedMessages = window.localStorage.getItem("ziggyMessages");
-    if (!savedMessages) return [];
-
-    try {
-      const parsedMessages: unknown = JSON.parse(savedMessages);
-      return Array.isArray(parsedMessages)
-        ? parsedMessages.filter(isZiggyMessage)
-        : [];
-    } catch {
-      return [];
-    }
-  });
   const [ziggyMessageStatus, setZiggyMessageStatus] = useState("");
+  const [isPostcardSubmitting, setIsPostcardSubmitting] = useState(false);
+  const [isZiggyMessageSubmitting, setIsZiggyMessageSubmitting] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
   const paperPageRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -343,11 +323,53 @@ export default function Home() {
     });
   }, [backpackSection]);
 
-  useEffect(() => {
-    window.localStorage.setItem("ziggyMessages", JSON.stringify(ziggyMessages));
-  }, [ziggyMessages]);
+  const submitPrivateMessage = async (payload: PrivateMessagePayload) => {
+    if (!privateMessageEndpoint) {
+      return {
+        ok: false,
+        message: "Message sending is waiting for the private form connection.",
+      };
+    }
 
-  const handleZiggyMessageSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(privateMessageEndpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          _subject: payload.subject,
+          source: payload.source,
+          name: payload.name,
+          email: payload.email,
+          message: payload.message,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          message: "Something blocked the send. Please try again in a moment.",
+        };
+      }
+
+      return {ok: true, message: "Sent. Thank you for leaving a note."};
+    } catch {
+      return {
+        ok: false,
+        message: "The garden could not send this yet. Please try again in a moment.",
+      };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  };
+
+  const handleZiggyMessageSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedMessage = ziggyMessage.trim();
@@ -357,17 +379,25 @@ export default function Home() {
     }
 
     const trimmedName = ziggyName.trim();
-    setZiggyMessages((currentMessages) => [
-      {
-        id: window.crypto.randomUUID(),
-        name: trimmedName || "A garden visitor",
-        message: trimmedMessage,
-      },
-      ...currentMessages,
-    ]);
-    setZiggyName("");
-    setZiggyMessage("");
-    setZiggyMessageStatus("Message saved for Ziggy.");
+    setIsZiggyMessageSubmitting(true);
+    setZiggyMessageStatus("Sending your note to Ziggy...");
+
+    const result = await submitPrivateMessage({
+      source: "ziggy",
+      name: trimmedName || "A garden visitor",
+      subject: "A note for Ziggy from Paulo's Garden",
+      message: trimmedMessage,
+    });
+
+    if (result.ok) {
+      setZiggyName("");
+      setZiggyMessage("");
+    }
+
+    setZiggyMessageStatus(
+      result.ok ? "Message sent. We'll make sure Ziggy gets it." : result.message,
+    );
+    setIsZiggyMessageSubmitting(false);
   };
 
   const activeZiggyPhoto = ziggyPhotos[ziggyPhotoIndex];
@@ -384,9 +414,39 @@ export default function Home() {
     );
   };
 
-  const handlePostcardSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handlePostcardSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setPostcardStatus("Postcard drafted. Email sending is not connected yet.");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const subject = String(formData.get("subject") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
+
+    if (!email || !message) {
+      setPostcardStatus("Add your email and a message before sending.");
+      return;
+    }
+
+    setIsPostcardSubmitting(true);
+    setPostcardStatus("Sending postcard...");
+
+    const result = await submitPrivateMessage({
+      source: "postcard",
+      name: name || "A garden visitor",
+      email,
+      subject: subject || "Postcard from Paulo's Garden",
+      message,
+    });
+
+    if (result.ok) {
+      form.reset();
+    }
+
+    setPostcardStatus(
+      result.ok ? "Postcard sent. Thank you for writing." : result.message,
+    );
+    setIsPostcardSubmitting(false);
   };
 
   const handleDialogKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -806,8 +866,12 @@ export default function Home() {
                           required
                         />
                       </label>
-                      <button className="ziggy-submit" type="submit">
-                        Leave message
+                      <button
+                        className="ziggy-submit"
+                        type="submit"
+                        disabled={isZiggyMessageSubmitting}
+                      >
+                        {isZiggyMessageSubmitting ? "Sending..." : "Leave message"}
                       </button>
                       {ziggyMessageStatus ? (
                         <p className="ziggy-message-status" role="status">
@@ -815,19 +879,6 @@ export default function Home() {
                         </p>
                       ) : null}
                     </form>
-                    {ziggyMessages.length > 0 ? (
-                      <div className="ziggy-saved-messages">
-                        <h4>Little notes</h4>
-                        <ul>
-                          {ziggyMessages.slice(0, 3).map((savedMessage) => (
-                            <li key={savedMessage.id}>
-                              <strong>{savedMessage.name}</strong>
-                              <span>{savedMessage.message}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
                   </section>
                 </article>
               </div>
@@ -900,15 +951,42 @@ export default function Home() {
                     <strong>Paulo Osório</strong>
                   </div>
                   <label>
+                    From
+                    <input name="name" placeholder="Your name" maxLength={80} />
+                  </label>
+                  <label>
+                    Email
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="Where can I reply?"
+                      maxLength={120}
+                      required
+                    />
+                  </label>
+                  <label>
                     Subject
-                    <input placeholder="What should we talk about?" maxLength={90} />
+                    <input
+                      name="subject"
+                      placeholder="What should we talk about?"
+                      maxLength={90}
+                    />
                   </label>
                   <label>
                     Message
-                    <textarea placeholder="Write your message here." maxLength={640} />
+                    <textarea
+                      name="message"
+                      placeholder="Write your message here."
+                      maxLength={640}
+                      required
+                    />
                   </label>
-                  <button className="postcard-send" type="submit">
-                    Mark as ready
+                  <button
+                    className="postcard-send"
+                    type="submit"
+                    disabled={isPostcardSubmitting}
+                  >
+                    {isPostcardSubmitting ? "Sending..." : "Send postcard"}
                   </button>
                   {postcardStatus ? (
                     <p className="postcard-status" role="status">

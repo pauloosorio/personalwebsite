@@ -1902,6 +1902,12 @@ button {
   rotate: -0.6deg;
 }
 
+.ziggy-submit:disabled,
+.postcard-send:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .ziggy-message-status {
   margin: 0;
   color: var(--ziggy-cocoa);
