@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import {
+  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent,
@@ -258,6 +259,8 @@ export default function Home() {
   const [mobileObjectIndex, setMobileObjectIndex] = useState(0);
   const [mobileCarouselDirection, setMobileCarouselDirection] =
     useState<CarouselDirection>("next");
+  const [mobileCarouselDrag, setMobileCarouselDrag] = useState(0);
+  const [isMobileCarouselDragging, setIsMobileCarouselDragging] = useState(false);
   const [ziggyName, setZiggyName] = useState("");
   const [ziggyMessage, setZiggyMessage] = useState("");
   const [ziggyPhotoIndex, setZiggyPhotoIndex] = useState(0);
@@ -443,6 +446,18 @@ export default function Home() {
 
   const handleMobileCarouselPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     mobileCarouselPointerRef.current = event.clientX;
+    mobileCarouselDidSwipeRef.current = false;
+    setIsMobileCarouselDragging(true);
+    setMobileCarouselDrag(0);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleMobileCarouselPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (mobileCarouselPointerRef.current === null) return;
+
+    const distance = event.clientX - mobileCarouselPointerRef.current;
+    const limitedDistance = Math.max(-92, Math.min(92, distance));
+    setMobileCarouselDrag(limitedDistance);
   };
 
   const handleMobileCarouselPointerUp = (event: PointerEvent<HTMLDivElement>) => {
@@ -450,10 +465,27 @@ export default function Home() {
 
     const distance = event.clientX - mobileCarouselPointerRef.current;
     mobileCarouselPointerRef.current = null;
+    setIsMobileCarouselDragging(false);
+    setMobileCarouselDrag(0);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
 
     if (Math.abs(distance) < 34) return;
     mobileCarouselDidSwipeRef.current = true;
     showMobileObject(distance < 0 ? "next" : "previous");
+  };
+
+  const handleMobileCarouselPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    mobileCarouselPointerRef.current = null;
+    mobileCarouselDidSwipeRef.current = false;
+    setIsMobileCarouselDragging(false);
+    setMobileCarouselDrag(0);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
 
   const handleZiggyPhotoPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -675,11 +707,22 @@ export default function Home() {
           <div
             className="mobile-carousel-stage"
             onPointerDown={handleMobileCarouselPointerDown}
+            onPointerMove={handleMobileCarouselPointerMove}
             onPointerUp={handleMobileCarouselPointerUp}
+            onPointerCancel={handleMobileCarouselPointerCancel}
           >
             <button
               key={`${activeMobileObject.id}-${mobileCarouselDirection}`}
-              className={`mobile-featured-object mobile-featured-object-${activeMobileObject.id} mobile-featured-object-${mobileCarouselDirection}`}
+              className={`mobile-featured-object mobile-featured-object-${activeMobileObject.id} mobile-featured-object-${mobileCarouselDirection}${isMobileCarouselDragging ? " mobile-featured-object-dragging" : ""}`}
+              style={
+                {
+                  "--mobile-drag-x": `${mobileCarouselDrag}px`,
+                  "--mobile-drag-rotate": `${mobileCarouselDrag / 18}deg`,
+                  "--mobile-drag-scale": String(
+                    1 - Math.min(Math.abs(mobileCarouselDrag) / 920, 0.06),
+                  ),
+                } as CSSProperties
+              }
               type="button"
               aria-label={activeMobileObject.label}
               aria-haspopup="dialog"
