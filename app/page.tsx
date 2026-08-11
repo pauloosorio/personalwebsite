@@ -449,7 +449,6 @@ export default function Home() {
     mobileCarouselDidSwipeRef.current = false;
     setIsMobileCarouselDragging(true);
     setMobileCarouselDrag(0);
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handleMobileCarouselPointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -468,24 +467,16 @@ export default function Home() {
     setIsMobileCarouselDragging(false);
     setMobileCarouselDrag(0);
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
     if (Math.abs(distance) < 34) return;
     mobileCarouselDidSwipeRef.current = true;
     showMobileObject(distance < 0 ? "next" : "previous");
   };
 
-  const handleMobileCarouselPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+  const handleMobileCarouselPointerCancel = () => {
     mobileCarouselPointerRef.current = null;
     mobileCarouselDidSwipeRef.current = false;
     setIsMobileCarouselDragging(false);
     setMobileCarouselDrag(0);
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
   };
 
   const handleZiggyPhotoPointerDown = (event: PointerEvent<HTMLDivElement>) => {

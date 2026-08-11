@@ -3468,6 +3468,7 @@ button {
   .scene-hero {
     min-height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
   }
 
   .scene-hero::after {
@@ -3484,11 +3485,13 @@ button {
     position: relative;
     display: grid;
     width: 100%;
+    height: 100svh;
     min-height: 100svh;
     overflow: hidden;
     place-items: center;
     padding: 108px 22px 72px;
     isolation: isolate;
+    overscroll-behavior: none;
   }
 
   .mobile-garden-background {
@@ -3740,7 +3743,7 @@ button {
     width: 100%;
     min-height: min(68svh, 590px);
     place-items: center;
-    touch-action: pan-y;
+    touch-action: pan-x;
     user-select: none;
   }
 
@@ -3991,18 +3994,8 @@ button {
   }
 
   .story-panel-backpack .panel-close {
-    position: fixed;
-    top: max(42px, calc(env(safe-area-inset-top) + 24px));
+    top: 24px;
     right: 24px;
-    z-index: 80;
-  }
-
-  .story-panel-backpack .paper-surface,
-  .story-panel-projects .paper-surface {
-    top: -148px;
-    bottom: -64px;
-    height: calc(100% + 212px);
-    object-position: center 14%;
   }
 
   .story-panel-projects {
@@ -4015,7 +4008,7 @@ button {
 
   .story-panel-projects .panel-close {
     position: fixed;
-    top: max(42px, calc(env(safe-area-inset-top) + 24px));
+    top: 24px;
     right: 24px;
   }
 
@@ -4160,7 +4153,7 @@ button {
 
   .story-panel-ziggy .panel-close {
     position: fixed;
-    top: max(42px, calc(env(safe-area-inset-top) + 24px));
+    top: 24px;
     right: 24px;
     z-index: 80;
   }
@@ -4168,7 +4161,7 @@ button {
   .ziggy-album {
     position: relative;
     display: block;
-    width: 100%;
+    width: min(644px, 100vw);
     height: 100svh;
     min-height: 0;
     margin: 0 auto;
@@ -4176,7 +4169,7 @@ button {
     padding: 82px 0 max(68px, env(safe-area-inset-bottom));
     background:
       linear-gradient(rgba(255, 255, 252, 0.04), rgba(255, 255, 252, 0.04)),
-      url("/assets/about-paper-organic.png") center 14% / cover no-repeat;
+      url("/assets/about-paper-organic.png") center / cover no-repeat;
     filter: none;
     isolation: isolate;
     overflow-x: hidden;
