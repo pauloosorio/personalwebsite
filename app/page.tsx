@@ -3,7 +3,14 @@
 /* eslint-disable @next/next/no-img-element -- V5 uses transparent, precisely positioned local PNG layers; Vinext's local next/image optimizer fails for this interaction layer. */
 
 import Link from "next/link";
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const panelKeys = ["backpack", "ziggy", "projects", "contact"] as const;
 const privateMessageEndpoint = "https://formspree.io/f/mjybwbjp";
@@ -11,6 +18,7 @@ const privateMessageEndpoint = "https://formspree.io/f/mjybwbjp";
 type PanelId = (typeof panelKeys)[number];
 type PanelKey = PanelId | null;
 type BackpackSection = "about" | "cv";
+type CarouselDirection = "next" | "previous";
 
 type PrivateMessagePayload = {
   source: "postcard" | "ziggy";
@@ -247,6 +255,9 @@ const getFocusableElements = (element: HTMLElement) =>
 export default function Home() {
   const [panel, setPanel] = useState<PanelKey>(null);
   const [backpackSection, setBackpackSection] = useState<BackpackSection>("about");
+  const [mobileObjectIndex, setMobileObjectIndex] = useState(0);
+  const [mobileCarouselDirection, setMobileCarouselDirection] =
+    useState<CarouselDirection>("next");
   const [ziggyName, setZiggyName] = useState("");
   const [ziggyMessage, setZiggyMessage] = useState("");
   const [ziggyPhotoIndex, setZiggyPhotoIndex] = useState(0);
@@ -258,6 +269,9 @@ export default function Home() {
   const paperPageRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const mobileCarouselPointerRef = useRef<number | null>(null);
+  const mobileCarouselDidSwipeRef = useRef(false);
+  const ziggyPhotoPointerRef = useRef<number | null>(null);
 
   const openPanel = (nextPanel: PanelId) => {
     openerRef.current =
@@ -412,6 +426,53 @@ export default function Home() {
     setZiggyPhotoIndex((currentIndex) =>
       currentIndex === ziggyPhotos.length - 1 ? 0 : currentIndex + 1,
     );
+  };
+
+  const activeMobileObject = sceneObjects[mobileObjectIndex];
+
+  const showMobileObject = (direction: CarouselDirection) => {
+    setMobileCarouselDirection(direction);
+    setMobileObjectIndex((currentIndex) => {
+      if (direction === "next") {
+        return currentIndex === sceneObjects.length - 1 ? 0 : currentIndex + 1;
+      }
+
+      return currentIndex === 0 ? sceneObjects.length - 1 : currentIndex - 1;
+    });
+  };
+
+  const handleMobileCarouselPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    mobileCarouselPointerRef.current = event.clientX;
+  };
+
+  const handleMobileCarouselPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (mobileCarouselPointerRef.current === null) return;
+
+    const distance = event.clientX - mobileCarouselPointerRef.current;
+    mobileCarouselPointerRef.current = null;
+
+    if (Math.abs(distance) < 34) return;
+    mobileCarouselDidSwipeRef.current = true;
+    showMobileObject(distance < 0 ? "next" : "previous");
+  };
+
+  const handleZiggyPhotoPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    ziggyPhotoPointerRef.current = event.clientX;
+  };
+
+  const handleZiggyPhotoPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (ziggyPhotoPointerRef.current === null) return;
+
+    const distance = event.clientX - ziggyPhotoPointerRef.current;
+    ziggyPhotoPointerRef.current = null;
+
+    if (Math.abs(distance) < 34) return;
+    if (distance < 0) {
+      showNextZiggyPhoto();
+      return;
+    }
+
+    showPreviousZiggyPhoto();
   };
 
   const handlePostcardSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -592,6 +653,91 @@ export default function Home() {
                 <path d="m24 51 8 11 12-5" />
               </svg>
             </span>
+          </div>
+        </div>
+        <div className="mobile-garden" aria-label="Mobile portfolio garden">
+          <img
+            className="mobile-garden-background"
+            src="/assets/v5/park-garden-v5-environment-poster.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <header className="identity mobile-identity" aria-label="Portfolio identity">
+            <span className="identity-name">
+              Paulo Osório
+            </span>
+            <span className="identity-role">Lead Experience Designer</span>
+          </header>
+          <nav className="mobile-world-links" aria-label="Primary links">
+            <a href="https://www.linkedin.com/in/paulo-os%C3%B3rio-70507a198">LinkedIn</a>
+          </nav>
+
+          <div
+            className="mobile-carousel-stage"
+            onPointerDown={handleMobileCarouselPointerDown}
+            onPointerUp={handleMobileCarouselPointerUp}
+          >
+            <button
+              key={`${activeMobileObject.id}-${mobileCarouselDirection}`}
+              className={`mobile-featured-object mobile-featured-object-${activeMobileObject.id} mobile-featured-object-${mobileCarouselDirection}`}
+              type="button"
+              aria-label={activeMobileObject.label}
+              aria-haspopup="dialog"
+              aria-expanded={panel === activeMobileObject.id}
+              onClick={() => {
+                if (mobileCarouselDidSwipeRef.current) {
+                  mobileCarouselDidSwipeRef.current = false;
+                  return;
+                }
+
+                openPanel(activeMobileObject.id);
+              }}
+            >
+              <span className="mobile-object-frame" aria-hidden="true">
+                {activeMobileObject.normalSrc ? (
+                  <>
+                    <img
+                      className="mobile-object-image mobile-object-normal"
+                      src={activeMobileObject.normalSrc}
+                      alt=""
+                    />
+                    <img
+                      className="mobile-object-image mobile-object-hover"
+                      src={activeMobileObject.hoverSrc ?? activeMobileObject.normalSrc}
+                      alt=""
+                    />
+                  </>
+                ) : null}
+                <span className="mobile-object-shine" />
+              </span>
+              <span className="mobile-object-label">
+                {activeMobileObject.id === "backpack" ? "About me + CV" : null}
+                {activeMobileObject.id === "ziggy" ? "Ziggy story" : null}
+                {activeMobileObject.id === "projects" ? "Projects" : null}
+                {activeMobileObject.id === "contact" ? "Send me a note" : null}
+              </span>
+            </button>
+          </div>
+
+          <div className="mobile-carousel-controls" aria-label="Choose a garden object">
+            <button
+              type="button"
+              aria-label="Show previous object"
+              onClick={() => showMobileObject("previous")}
+            >
+              Previous
+            </button>
+            <span aria-live="polite">
+              {String(mobileObjectIndex + 1).padStart(2, "0")} /{" "}
+              {String(sceneObjects.length).padStart(2, "0")}
+            </span>
+            <button
+              type="button"
+              aria-label="Show next object"
+              onClick={() => showMobileObject("next")}
+            >
+              Next
+            </button>
           </div>
         </div>
       </section>
@@ -793,11 +939,16 @@ export default function Home() {
               <div className="ziggy-album">
                 <img
                   className="ziggy-album-surface"
-                  src="/assets/ziggy-memory-book/ziggy-paper-book-cutout.png"
+                  src="/assets/about-paper-organic.png"
                   alt=""
                   aria-hidden="true"
                 />
-                <div className="ziggy-photo-page" aria-label="Ziggy photo album">
+                <div
+                  className="ziggy-photo-page"
+                  aria-label="Ziggy photo album"
+                  onPointerDown={handleZiggyPhotoPointerDown}
+                  onPointerUp={handleZiggyPhotoPointerUp}
+                >
                   <figure className="ziggy-polaroid">
                     <img src={activeZiggyPhoto.src} alt={activeZiggyPhoto.alt} />
                   </figure>

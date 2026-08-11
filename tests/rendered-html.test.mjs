@@ -98,7 +98,7 @@ test("keeps the Ziggy album and private message form wired", async () => {
   assert.match(page, /Leave something for Ziggy/);
   assert.match(page, /Previous/);
   assert.match(page, /Next/);
-  assert.match(page, /ziggy-paper-book-cutout\.png/);
+  assert.match(page, /about-paper-organic\.png/);
   assert.match(page, /img_0482-polaroid\.png/);
   assert.match(page, /img_0486-polaroid\.png/);
   assert.match(page, /privateMessageEndpoint/);
