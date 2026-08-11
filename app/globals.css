@@ -1854,6 +1854,8 @@ button {
 .ziggy-message-form input,
 .ziggy-message-form textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid rgba(123, 79, 50, 0.24);
   border-radius: 8px;
   padding: 10px 11px;
@@ -1865,7 +1867,11 @@ button {
 
 .ziggy-message-form textarea {
   min-height: 108px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
   resize: vertical;
+  white-space: pre-wrap;
 }
 
 .ziggy-message-form input::placeholder,
