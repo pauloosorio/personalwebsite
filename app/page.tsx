@@ -973,7 +973,7 @@ export default function Home() {
               <div className="ziggy-album">
                 <img
                   className="ziggy-album-surface"
-                  src="/assets/about-paper-organic.png"
+                  src="/assets/ziggy-memory-book/ziggy-paper-book-cutout.png"
                   alt=""
                   aria-hidden="true"
                 />
