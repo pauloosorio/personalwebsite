@@ -268,11 +268,16 @@ export default function Home() {
   const [ziggyMessageStatus, setZiggyMessageStatus] = useState("");
   const [isPostcardSubmitting, setIsPostcardSubmitting] = useState(false);
   const [isZiggyMessageSubmitting, setIsZiggyMessageSubmitting] = useState(false);
+  const panelBackdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const paperPageRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const mobileCarouselPointerRef = useRef<number | null>(null);
+  const mobileCarouselPointerRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+  } | null>(null);
   const mobileCarouselDidSwipeRef = useRef(false);
   const ziggyPhotoPointerRef = useRef<number | null>(null);
 
@@ -444,35 +449,71 @@ export default function Home() {
     });
   };
 
-  const handleMobileCarouselPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    mobileCarouselPointerRef.current = event.clientX;
+  const handleMobileCarouselPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    mobileCarouselPointerRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
     mobileCarouselDidSwipeRef.current = false;
     setIsMobileCarouselDragging(true);
     setMobileCarouselDrag(0);
   };
 
-  const handleMobileCarouselPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (mobileCarouselPointerRef.current === null) return;
+  const handleMobileCarouselPointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    const activePointer = mobileCarouselPointerRef.current;
+    if (!activePointer || activePointer.pointerId !== event.pointerId) return;
 
-    const distance = event.clientX - mobileCarouselPointerRef.current;
-    const limitedDistance = Math.max(-92, Math.min(92, distance));
+    const distance = event.clientX - activePointer.startX;
+    const limitedDistance =
+      Math.sign(distance) * Math.min(128, Math.abs(distance) * 0.74);
     setMobileCarouselDrag(limitedDistance);
   };
 
-  const handleMobileCarouselPointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    if (mobileCarouselPointerRef.current === null) return;
+  const handleMobileCarouselPointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+    const activePointer = mobileCarouselPointerRef.current;
+    if (!activePointer || activePointer.pointerId !== event.pointerId) return;
 
-    const distance = event.clientX - mobileCarouselPointerRef.current;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    const distance = event.clientX - activePointer.startX;
+    const verticalDistance = event.clientY - activePointer.startY;
+    const horizontalTravel = Math.abs(distance);
+    const verticalTravel = Math.abs(verticalDistance);
     mobileCarouselPointerRef.current = null;
     setIsMobileCarouselDragging(false);
     setMobileCarouselDrag(0);
 
-    if (Math.abs(distance) < 34) return;
+    if (horizontalTravel < 10 && verticalTravel < 10) {
+      mobileCarouselDidSwipeRef.current = true;
+      openPanel(activeMobileObject.id);
+      window.setTimeout(() => {
+        mobileCarouselDidSwipeRef.current = false;
+      }, 120);
+      return;
+    }
+
+    if (horizontalTravel < 46 || horizontalTravel < verticalTravel * 0.9) {
+      return;
+    }
+
     mobileCarouselDidSwipeRef.current = true;
     showMobileObject(distance < 0 ? "next" : "previous");
+    window.setTimeout(() => {
+      mobileCarouselDidSwipeRef.current = false;
+    }, 220);
   };
 
-  const handleMobileCarouselPointerCancel = () => {
+  const handleMobileCarouselPointerCancel = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
     mobileCarouselPointerRef.current = null;
     mobileCarouselDidSwipeRef.current = false;
     setIsMobileCarouselDragging(false);
@@ -540,9 +581,9 @@ export default function Home() {
       return;
     }
 
-    if (event.key !== "Tab" || !panelRef.current) return;
+    if (event.key !== "Tab" || !panelBackdropRef.current) return;
 
-    const focusableElements = getFocusableElements(panelRef.current);
+    const focusableElements = getFocusableElements(panelBackdropRef.current);
     const firstElement = focusableElements[0];
     const lastElement = focusableElements.at(-1);
 
@@ -697,10 +738,6 @@ export default function Home() {
 
           <div
             className="mobile-carousel-stage"
-            onPointerDown={handleMobileCarouselPointerDown}
-            onPointerMove={handleMobileCarouselPointerMove}
-            onPointerUp={handleMobileCarouselPointerUp}
-            onPointerCancel={handleMobileCarouselPointerCancel}
           >
             <button
               key={`${activeMobileObject.id}-${mobileCarouselDirection}`}
@@ -718,6 +755,10 @@ export default function Home() {
               aria-label={activeMobileObject.label}
               aria-haspopup="dialog"
               aria-expanded={panel === activeMobileObject.id}
+              onPointerDown={handleMobileCarouselPointerDown}
+              onPointerMove={handleMobileCarouselPointerMove}
+              onPointerUp={handleMobileCarouselPointerUp}
+              onPointerCancel={handleMobileCarouselPointerCancel}
               onClick={() => {
                 if (mobileCarouselDidSwipeRef.current) {
                   mobileCarouselDidSwipeRef.current = false;
@@ -777,7 +818,41 @@ export default function Home() {
       </section>
 
       {panel ? (
-        <div className="panel-backdrop" role="presentation" onClick={closePanel}>
+        <div
+          ref={panelBackdropRef}
+          className="panel-dialog-root"
+          onKeyDown={handleDialogKeyDown}
+        >
+          <div
+            className="panel-mobile-controls"
+            aria-hidden={false}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              ref={closeButtonRef}
+              className="panel-close panel-close-mobile"
+              type="button"
+              aria-label="Close"
+              onClick={closePanel}
+            />
+            {panel === "backpack" && backpackSection === "cv" ? (
+              <button
+                className="inline-paper-link cv-panel-back-action cv-panel-back-action-mobile"
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setBackpackSection("about");
+                }}
+              >
+                Back to about
+              </button>
+            ) : null}
+          </div>
+          <div
+            className="panel-backdrop"
+            role="presentation"
+            onClick={closePanel}
+          >
           <section
             ref={panelRef}
             className={`story-panel story-panel-${panel}`}
@@ -786,12 +861,10 @@ export default function Home() {
             aria-labelledby={`${panel}-panel-title`}
             aria-describedby={`${panel}-panel-description`}
             tabIndex={-1}
-            onKeyDown={handleDialogKeyDown}
             onClick={(event) => event.stopPropagation()}
           >
             <button
-              ref={closeButtonRef}
-              className="panel-close"
+              className="panel-close panel-close-panel"
               type="button"
               aria-label="Close"
               onClick={closePanel}
@@ -800,7 +873,7 @@ export default function Home() {
               <>
                 {backpackSection === "cv" ? (
                   <button
-                    className="inline-paper-link cv-panel-back-action"
+                    className="inline-paper-link cv-panel-back-action cv-panel-back-action-panel"
                     type="button"
                     onClick={() => setBackpackSection("about")}
                   >
@@ -1185,6 +1258,7 @@ export default function Home() {
               </div>
             ) : null}
           </section>
+          </div>
         </div>
       ) : null}
     </main>

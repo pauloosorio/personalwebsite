@@ -483,16 +483,31 @@ button {
   scale: 1.045;
 }
 
-.panel-backdrop {
+.panel-dialog-root {
   position: fixed;
   inset: 0;
   z-index: 20;
+}
+
+.panel-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: grid;
   place-items: center;
   padding: clamp(18px, 3vw, 42px);
   background: rgba(51, 41, 32, 0.18);
   backdrop-filter: blur(5px);
   overflow: auto;
+}
+
+.panel-mobile-controls {
+  display: none;
+}
+
+.panel-close-mobile,
+.cv-panel-back-action-mobile {
+  display: none;
 }
 
 .panel-backdrop:has(.story-panel-projects) {
@@ -3743,7 +3758,8 @@ button {
     width: 100%;
     min-height: min(68svh, 590px);
     place-items: center;
-    touch-action: pan-x;
+    overscroll-behavior: contain;
+    touch-action: none;
     user-select: none;
   }
 
@@ -3764,10 +3780,11 @@ button {
     rotate: var(--mobile-drag-rotate, 0deg);
     scale: var(--mobile-drag-scale, 1);
     transition:
-      translate 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      rotate 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      scale 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      translate 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      rotate 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      scale 220ms cubic-bezier(0.16, 1, 0.3, 1);
     -webkit-tap-highlight-color: transparent;
+    will-change: translate, rotate, scale;
     animation: mobile-object-enter-next 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
@@ -3973,43 +3990,61 @@ button {
 
   .panel-backdrop {
     align-items: stretch;
+    overflow-x: hidden;
+    overflow-y: hidden;
     padding: 0;
+    background: rgba(51, 41, 32, 0.18);
+  }
+
+  .panel-backdrop:has(.story-panel-ziggy),
+  .panel-backdrop:has(.story-panel-projects) {
+    padding: 0;
+    overflow: hidden;
+    background: rgba(51, 41, 32, 0.18);
+  }
+
+  .panel-backdrop:has(.story-panel-projects)::before {
+    display: none;
   }
 
   .story-panel {
-    width: 100%;
+    width: 100vw;
+    height: 100svh;
+    height: 100dvh;
     min-height: 100svh;
+    min-height: 100dvh;
     max-height: none;
     border-width: 0;
     border-radius: 0;
-    padding: 24px;
+    padding: 0;
     transform: none;
     animation: none;
+    overflow: hidden;
+    box-shadow: none;
   }
 
-  .story-panel-backpack {
-    width: 100%;
+  .story-panel-backpack,
+  .story-panel-projects,
+  .story-panel-ziggy {
+    --mobile-paper-top: max(76px, calc(env(safe-area-inset-top) + 68px));
+    --mobile-paper-bottom: max(92px, calc(env(safe-area-inset-bottom) + 64px));
+    --mobile-paper-content: min(calc(100vw - 88px), 560px);
+    box-sizing: border-box;
+    width: 100vw;
+    max-width: none;
+    height: 100svh;
+    height: 100dvh;
     min-height: 100svh;
-    padding: 76px 44px 52px;
-  }
-
-  .story-panel-backpack .panel-close {
-    top: 24px;
-    right: 24px;
-  }
-
-  .story-panel-projects {
-    width: 100%;
-    min-height: 100svh;
-    max-height: none;
-    padding: 76px 44px 52px;
-    overflow: visible;
-  }
-
-  .story-panel-projects .panel-close {
-    position: fixed;
-    top: 24px;
-    right: 24px;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(rgba(255, 255, 252, 0.08), rgba(255, 255, 252, 0.08)),
+      url("/assets/about-paper-mobile-texture.png") center / cover no-repeat;
+    background-color: var(--cream-0);
+    box-shadow: none;
   }
 
   .comic-book {
@@ -4053,9 +4088,9 @@ button {
   }
 
   .project-index-page {
-    min-height: 620px;
+    min-height: auto;
     padding-top: 0;
-    padding-bottom: 36px;
+    padding-bottom: 0;
   }
 
   .project-index-header {
@@ -4065,6 +4100,16 @@ button {
   .project-index-row {
     grid-template-columns: auto minmax(0, 1fr);
     gap: 8px;
+    min-height: 88px;
+    padding: 14px 22px 16px;
+  }
+
+  .project-index-row::before {
+    inset: -8px -16px;
+  }
+
+  .project-index-row::after {
+    inset: 5px 10px;
   }
 
   .project-index-rule {
@@ -4078,6 +4123,16 @@ button {
 
   .project-index-label {
     grid-column: 1 / -1;
+  }
+
+  .project-index-title,
+  .project-index-label {
+    font-size: clamp(17px, 5.1vw, 22px);
+    line-height: 1.06;
+  }
+
+  .project-index-issue {
+    font-size: clamp(10px, 3.1vw, 13px);
   }
 
   .comic-panel-copy {
@@ -4100,19 +4155,35 @@ button {
     padding: 0;
   }
 
-  .cv-panel-back-action {
-    position: fixed;
-    top: 28px;
-    left: 44px;
-  }
-
   .paper-page {
-    min-height: 620px;
+    min-height: auto;
   }
 
-  .story-panel-backpack .paper-page {
-    max-height: calc(100svh - 142px);
-    padding-bottom: 74px;
+  .story-panel-backpack .paper-page,
+  .story-panel-projects .paper-page,
+  .story-panel-ziggy .ziggy-album {
+    box-sizing: border-box;
+    width: var(--mobile-paper-content);
+    max-width: var(--mobile-paper-content);
+    height: 100%;
+    margin: 0 auto;
+    padding: var(--mobile-paper-top) 0 var(--mobile-paper-bottom);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .story-panel-backpack .paper-page::-webkit-scrollbar,
+  .story-panel-projects .paper-page::-webkit-scrollbar,
+  .story-panel-ziggy .ziggy-album::-webkit-scrollbar {
+    display: none;
+  }
+
+  .story-panel-backpack .paper-surface,
+  .story-panel-projects .paper-surface,
+  .story-panel-ziggy .ziggy-album-surface {
+    display: none;
   }
 
   .about-copy {
@@ -4133,53 +4204,28 @@ button {
     margin: 0 auto 28px;
   }
 
-  .story-panel-ziggy {
-    width: 100%;
-    height: 100svh;
-    min-height: 0;
-    max-height: none;
-    padding: 0;
-    background: transparent;
-    transform: none;
-    animation: none;
-    overflow: hidden;
+  .story-panel-projects .paper-page {
+    display: grid;
+    align-items: center;
   }
 
-  .panel-backdrop:has(.story-panel-ziggy) {
-    padding: 0;
-    place-items: center;
-    overflow: hidden;
-  }
-
-  .story-panel-ziggy .panel-close {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    z-index: 80;
+  .story-panel-projects .project-index-page {
+    height: auto;
+    min-height: min(100%, calc(100dvh - var(--mobile-paper-top) - var(--mobile-paper-bottom)));
+    display: grid;
+    align-content: center;
   }
 
   .ziggy-album {
     position: relative;
     display: block;
-    width: min(644px, 100vw);
-    height: 100svh;
-    min-height: 0;
-    margin: 0 auto;
+    min-height: auto;
     aspect-ratio: auto;
-    padding: 82px 0 max(68px, env(safe-area-inset-bottom));
-    background:
-      linear-gradient(rgba(255, 255, 252, 0.04), rgba(255, 255, 252, 0.04)),
-      url("/assets/about-paper-organic.png") center / cover no-repeat;
+    background: transparent;
     filter: none;
     isolation: isolate;
-    overflow-x: hidden;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(29, 24, 20, 0.22) transparent;
-  }
-
-  .ziggy-album-surface {
-    display: none;
+    touch-action: pan-y;
+    user-select: none;
   }
 
   .ziggy-photo-page {
@@ -4187,7 +4233,7 @@ button {
     top: auto;
     left: auto;
     display: grid;
-    width: min(38ch, calc(100% - 64px));
+    width: 100%;
     height: auto;
     margin: 0 auto;
     padding: 20px 0 20px;
@@ -4203,11 +4249,11 @@ button {
     position: relative;
     top: auto;
     right: auto;
-    width: min(38ch, calc(100% - 64px));
+    width: 100%;
     height: auto;
-    max-width: 38ch;
+    max-width: none;
     overflow: visible;
-    margin: 0 auto;
+    margin: 0;
     padding: 28px 0 48px;
     background: transparent;
     box-shadow: none;
@@ -4216,12 +4262,43 @@ button {
   .story-panel.story-panel-ziggy h2.ziggy-title-tape {
     width: min(100%, 330px);
     min-height: 68px;
-    margin-left: 0;
+    margin-left: auto;
+    margin-right: auto;
     font-size: 26px;
   }
 
   .ziggy-story-copy p {
     font-size: 14px;
+  }
+
+  .ziggy-story-copy {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .project-index-list {
+    gap: 22px;
+  }
+
+  .project-index-row {
+    min-height: 72px;
+    padding: 12px 18px 14px;
+  }
+
+  .project-index-row::before {
+    inset: -7px -12px;
+  }
+
+  .project-index-title,
+  .project-index-label {
+    font-size: clamp(15px, 4.25vw, 19px);
+  }
+
+  .project-index-note {
+    max-width: 38ch;
+    margin-inline: auto;
+    font-size: 13px;
   }
 
   .ziggy-message-card {
@@ -4276,6 +4353,44 @@ button {
       var(--cream-0);
   }
 
+  .panel-close-panel,
+  .cv-panel-back-action-panel {
+    display: none;
+  }
+
+  .panel-mobile-controls {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: block;
+    pointer-events: none;
+  }
+
+  .panel-mobile-controls .panel-close-mobile,
+  .panel-mobile-controls .cv-panel-back-action-mobile {
+    pointer-events: auto;
+  }
+
+  .panel-close-mobile {
+    position: fixed;
+    top: max(24px, calc(env(safe-area-inset-top) + 16px));
+    right: 24px;
+    z-index: 1001;
+    display: block;
+    float: none;
+    margin: 0;
+    background: rgba(255, 249, 236, 0.34);
+  }
+
+  .cv-panel-back-action-mobile {
+    position: fixed;
+    top: max(28px, calc(env(safe-area-inset-top) + 20px));
+    left: 44px;
+    z-index: 1001;
+    display: inline-flex;
+    margin: 0;
+  }
+
   .postcard-back::before,
   .postcard-back::after {
     display: none;
@@ -4297,6 +4412,34 @@ button {
   .postcard-stamp {
     width: 68px;
     height: 78px;
+  }
+}
+
+@media (max-width: 768px) {
+  .story-panel-backpack .paper-page,
+  .story-panel-ziggy .ziggy-album {
+    min-height: 100svh;
+    min-height: 100dvh;
+    height: 100svh;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  .story-panel-ziggy .ziggy-story-copy {
+    width: 100%;
+    max-width: 38ch;
+    margin-inline: auto;
+  }
+
+  .story-panel-ziggy .ziggy-story-copy p {
+    max-width: none;
+  }
+
+  .story-panel-ziggy .ziggy-message-card {
+    box-sizing: border-box;
+    width: min(100%, 38ch);
+    max-width: 38ch;
+    margin-inline: auto;
   }
 }
 
